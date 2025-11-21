@@ -1,0 +1,41 @@
+name: Update outage data
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+jobs:
+  updater:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install requirements
+        run: |
+          pip install -r requirements.txt
+
+      - name: Fetch data from VOE
+        run: python fetch.py
+
+      - name: Generate images
+        run: python generate_images.py
+
+      - name: Commit changes
+        run: |
+          git config --local user.email "github-actions@github.com"
+          git config --local user.name "GitHub Actions"
+          git add -A
+          git commit -m "Update outage data" || echo "No changes"
+
+      - name: Push changes
+        uses: ad-m/github-push-action@v0.8.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
